@@ -1,6 +1,9 @@
 # Argument mining with BiLSTM
 
-## Objetivo
+## Objetivos
+- Desarrollar un entorno para la identificación y etiquetado de argumentos en textos del idioma inglés.
+- Proponer alternativas de embeddings distintos para evaluación.
+- Flexibilizar el input/output de texto para permitir diversas entradas y salidas según el caso.
 
 ## Instrucciones para su uso
 ### Entorno virtual python
@@ -12,16 +15,21 @@ $ pip install -r requirements.txt
 ```
 
 ### Archivos de entrenamiento
-TODO: Agregar los {dev,train,test}.txt a data
 
-dentro de ```/data``` se encontrarán los archivos de entrenamiento dev, train y test para ser directamente aplicados al modelo.
+dentro de ```/data/am_/``` se encontrarán los archivos de entrenamiento dev, train y test para ser directamente aplicados al modelo.
 
 Para obtener archivos para evaluar el modelo, mediante el siguiente comando se descargarán un set de textos con sus dos formatos: etiquetado y no para una posterior evaluacion de performance.  
 
-TODO: completar con la direccion donde se descargan los archivos essay_0XX.{txt, ann}
+TODO: Hacer script bash
 ```
-$ wget ...
+$ wget https://www.ukp.tu-darmstadt.de/fileadmin/user_upload/Group_UKP/data/argument-recognition/ArgumentAnnotatedEssays-1.0.zip
+$ unzip ArgumentAnnotatedEssays-1.0.zip
+$ cd ArgumentAnnotatedEssays-1.0
+$ unzip brat-project.zip
+$ cd ..
+$ mv ArgumentAnnotatedEssays-1.0/brat-project example_essays
 ```
+Tendremos ahora una carpeta "example_essays" con archivos de tipo .txt los cuáles serán el input de nuestra red, mientras que los .ann será nuestra verdad a comparar para la evaluación del sistema.
 
 ### Obtener modelo entrenado.
 TODO: Aca hay que configurar para que por parametro seleccione el embedding [levy, glove, word2vec]

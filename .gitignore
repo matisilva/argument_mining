@@ -8,7 +8,6 @@
 
 
 results_lichtenberg/
-pkl/
 alt/
 results/
 
@@ -19,7 +18,7 @@ lichtenberg_scripts/SingleTask
 lichtenberg_scripts/MultiTask
 
 /levy_deps.words
-
+*.pkl
 data/ace
 data/conll2003_ner
 data/ecb+
@@ -33,3 +32,4 @@ data/removeComments.py
 /data/morphtag-latin
 essay*.txt
 essay*.ann
+.env
