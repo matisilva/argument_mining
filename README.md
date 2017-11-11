@@ -1,6 +1,12 @@
 # Argument mining with BiLSTM
 
 ## Objetivos
+Basandonos en los repositorios de [UKPLab](https://github.com/UKPLab):
+
+- https://github.com/UKPLab/acl2017-neural_end2end_am
+- https://github.com/UKPLab/emnlp2017-bilstm-cnn-crf
+
+Adaptar el código para..
 - Desarrollar un entorno para la identificación y etiquetado de argumentos en textos del idioma inglés.
 - Proponer alternativas de embeddings distintos para evaluación.
 - Flexibilizar el input/output de texto para permitir diversas entradas y salidas según el caso.
