@@ -42,7 +42,7 @@ class BiLSTM:
     dataset = None
     embeddings = None
     labelKey = None
-    writeOutput = False    
+    writeOutput = True    
     devAndTestEqual = False
     resultsOut = None
     modelSavePath = None
@@ -446,10 +446,12 @@ class BiLSTM:
             
             
     def computeScores(self, devMatrix, testMatrix):
-        if self.labelKey.endswith('_BIO') or self.labelKey.endswith('_IOB') or self.labelKey.endswith('_IOBES'):
-            return self.computeF1Scores(devMatrix, testMatrix)
-        else:
-            return self.computeAccScores(devMatrix, testMatrix)
+        return self.computeF1Scores(devMatrix, testMatrix)
+        #if self.labelKey.endswith('_BIO') or self.labelKey.endswith('_IOB') or self.labelKey.endswith('_IOBES'):
+        #    return self.computeF1Scores(devMatrix, testMatrix)
+        #else:
+        #    return self.computeAccScores(devMatrix, testMatrix)
+        #    return self.computeAccScores(devMatrix, testMatrix)
             
     def computeF1Scores(self, devMatrix, testMatrix):       
         dev_pre, dev_rec, dev_f1 = self.computeF1(devMatrix, 'dev')

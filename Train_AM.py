@@ -40,7 +40,7 @@ embeddingsPath = 'levy_deps.words' #Word embeddings by Levy et al: https://levyo
 
 
 #Parameters of the network
-params = {'dropout': [0.25, 0.25], 'classifier': 'softmax', 'LSTM-Size': [300], 'optimizer': 'nadam', 'charEmbeddings': None, 'miniBatchSize': 32}
+params = {'dropout': [0.25, 0.25], 'classifier': 'softmax', 'LSTM-Size': [300], 'optimizer': 'nadam', 'charEmbeddings': 'None', 'miniBatchSize': 50}
 
 
 frequencyThresholdUnknownTokens = 50 #If a token that is not in the pre-trained embeddings file appears at least 50 times in the train.txt, then a new embedding is generated for this word
