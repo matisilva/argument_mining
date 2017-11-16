@@ -38,5 +38,5 @@ for sentenceIdx in range(len(sentences)):
     tokens = sentences[sentenceIdx]['tokens']
     tokenTags = tags[sentenceIdx]
     for tokenIdx in range(len(tokens)):
-        print("%s\t%s" % (tokens[tokenIdx], tokenTags[tokenIdx]))
+        print("{}\t{}".format(tokens[tokenIdx], tokenTags[tokenIdx]))
     print("")
