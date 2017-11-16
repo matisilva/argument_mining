@@ -32,15 +32,16 @@ logger.addHandler(ch)
 
 
 # :: Train / Dev / Test-Files ::
-datasetName = 'am_'
+datasetName = 'am_simple'
 dataColumns = {1:'tokens', 2:'AM_TAG'} #Tab separated columns, column 1 contains the token, 3 the universal POS tag
 labelKey = 'AM_TAG'
 
-embeddingsPath = 'levy_deps.words' #Word embeddings by Levy et al: https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/
+#embeddingsPath = 'levy_deps.words' #Word embeddings by Levy et al: https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/
+embeddingsPath = 'glove.6B.100d.txt' #Word embeddings by Levy et al: https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/
 
 
 #Parameters of the network
-params = {'dropout': [0.25, 0.25], 'classifier': 'softmax', 'LSTM-Size': [300], 'optimizer': 'nadam', 'charEmbeddings': 'None', 'miniBatchSize': 50}
+params = {'dropout': [0.25, 0.25], 'classifier': 'softmax', 'LSTM-Size': [100], 'optimizer': 'nadam', 'charEmbeddings': None, 'miniBatchSize': 32}
 
 
 frequencyThresholdUnknownTokens = 50 #If a token that is not in the pre-trained embeddings file appears at least 50 times in the train.txt, then a new embedding is generated for this word
@@ -65,10 +66,6 @@ pickleFile = perpareDataset(embeddingsPath, datasetFiles)
 #Load the embeddings and the dataset
 embeddings, word2Idx, datasets = loadDatasetPickle(pickleFile)
 data = datasets[datasetName]
-
-
-
-
 
 
 print("Dataset:", datasetName)
