@@ -22,6 +22,7 @@ import logging
 
 from .keraslayers.ChainCRF import ChainCRF
 import util.BIOF1Validation as BIOF1Validation
+from util.BIOF1Validation import compute_f1_token_basis
 
 
 import sys
@@ -48,11 +49,11 @@ class BiLSTM:
     modelSavePath = None
     maxCharLen = None
     
-    params = {'miniBatchSize': 32, 'dropout': [0.25, 0.25], 'classifier': 'Softmax', 'LSTM-Size': [100], 'optimizer': 'nadam', 'earlyStopping': 5, 'addFeatureDimensions': 10, 
+    params = {'miniBatchSize': 32, 'dropout': [0.25, 0.25], 'classifier': 'Softmax', 'LSTM-Size': [100], 'optimizer': 'nadam', 'earlyStopping': -1, 'addFeatureDimensions': 10,
                 'charEmbeddings': None, 'charEmbeddingsSize':30, 'charFilterSize': 30, 'charFilterLength':3, 'charLSTMSize': 25, 'clipvalue': 0, 'clipnorm': 1 } #Default params
    
 
-    def __init__(self,   params=None):        
+    def __init__(self,   params=None):
         if params != None:
             self.params.update(params)
         
@@ -129,7 +130,7 @@ class BiLSTM:
                 
                 for idx in indices:                    
                     for name in features:
-                        inputData[name].append(sentences[idx][name])                 
+                        inputData[name].append(sentences[idx][name])
                                                     
                 for name in features:
                     inputData[name] = np.asarray(inputData[name])
@@ -141,7 +142,7 @@ class BiLSTM:
             
             predIdx = 0
             for idx in indices:
-                predLabels[idx] = predictions[predIdx]    
+                predLabels[idx] = predictions[predIdx]
                 predIdx += 1   
         
         return predLabels
@@ -451,17 +452,18 @@ class BiLSTM:
         #    return self.computeF1Scores(devMatrix, testMatrix)
         #else:
         #    return self.computeAccScores(devMatrix, testMatrix)
-        #    return self.computeAccScores(devMatrix, testMatrix)
             
-    def computeF1Scores(self, devMatrix, testMatrix):       
-        dev_pre, dev_rec, dev_f1 = self.computeF1(devMatrix, 'dev')
-        logging.info("Dev-Data: Prec: %.3f, Rec: %.3f, F1: %.4f" % (dev_pre, dev_rec, dev_f1))
+    def computeF1Scores(self, devMatrix, testMatrix):
+        logging.info("Dev-Data metrics:")
+        for tag in self.label2Idx.keys():
+            dev_pre, dev_rec, dev_f1 = self.computeF1(devMatrix, 'dev', self.label2Idx[tag])
+            logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, dev_pre, dev_rec, dev_f1))
         
-        if self.devAndTestEqual:
-            test_pre, test_rec, test_f1 = dev_pre, dev_rec, dev_f1 
-        else:        
-            test_pre, test_rec, test_f1 = self.computeF1(testMatrix, 'test')
-        logging.info("Test-Data: Prec: %.3f, Rec: %.3f, F1: %.4f" % (test_pre, test_rec, test_f1))
+        logging.info("")
+        logging.info("Test-Data metrics:")
+        for tag in self.label2Idx.keys():
+            test_pre, test_rec, test_f1 = self.computeF1(testMatrix, 'test', self.label2Idx[tag])
+            logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, test_pre, test_rec, test_f1))
         
         return dev_f1, test_f1
         
@@ -493,16 +495,14 @@ class BiLSTM:
             for tokenIdx in range(len(sentences[idx]['tokens'])):
                 if sentences[idx]['tokens'][tokenIdx] != 0: #Skip padding tokens                     
                     unpaddedPredLabels.append(paddedPredLabels[idx][tokenIdx])
-            
+
             predLabels.append(unpaddedPredLabels)
-            
-            
         idx2Label = {v: k for k, v in self.mappings['label'].items()}
         labels = [[idx2Label[tag] for tag in tagSentence] for tagSentence in predLabels]
         
         return labels
     
-    def computeF1(self, sentences, name=''):
+    def computeF1(self, sentences, name='', tag_id="1"):
         correctLabels = []
         predLabels = []
         paddedPredLabels = self.predictLabels(sentences)        
@@ -518,18 +518,20 @@ class BiLSTM:
             correctLabels.append(unpaddedCorrectLabels)
             predLabels.append(unpaddedPredLabels)
             
-        
+        '''
         encodingScheme = self.labelKey[self.labelKey.index('_')+1:]
                
         pre, rec, f1 = BIOF1Validation.compute_f1(predLabels, correctLabels, self.idx2Label, 'O', encodingScheme)  
         pre_b, rec_b, f1_b = BIOF1Validation.compute_f1(predLabels, correctLabels, self.idx2Label, 'B', encodingScheme)
-        
-        
         if f1_b > f1:
             logging.debug("Setting incorrect tags to B yields improvement from %.4f to %.4f" % (f1, f1_b))
             pre, rec, f1 = pre_b, rec_b, f1_b 
         
     
+        '''
+
+        pre, rec, f1  =  compute_f1_token_basis(predLabels, correctLabels, tag_id)
+
         if self.writeOutput:
             self.writeOutputToFile(sentences, predLabels, '%.4f_%s' % (f1, name))
         return pre, rec, f1
@@ -537,7 +539,6 @@ class BiLSTM:
     def writeOutputToFile(self, sentences, predLabels, name):
             outputName = 'tmp/'+name
             fOut = open(outputName, 'w')
-            
             for sentenceIdx in range(len(sentences)):
                 for tokenIdx in range(len(sentences[sentenceIdx]['tokens'])):
                     token = self.idx2Word[sentences[sentenceIdx]['tokens'][tokenIdx]]
@@ -550,13 +551,10 @@ class BiLSTM:
                 fOut.write("\n")
             
             fOut.close()
-            
-        
-    
+
     def computeAcc(self, sentences):
         correctLabels = [sentences[idx][self.labelKey] for idx in range(len(sentences))]
-        predLabels = self.predictLabels(sentences) 
-        
+        predLabels = self.predictLabels(sentences)
         numLabels = 0
         numCorrLabels = 0
         for sentenceId in range(len(correctLabels)):
@@ -564,8 +562,6 @@ class BiLSTM:
                 numLabels += 1
                 if correctLabels[sentenceId][tokenId] == predLabels[sentenceId][tokenId]:
                     numCorrLabels += 1
-
-  
         return numCorrLabels/float(numLabels)
     
     def loadModel(self, modelPath):
@@ -580,7 +576,7 @@ class BiLSTM:
             if 'additionalFeatures' in f.attrs:
                 self.additionalFeatures = json.loads(f.attrs['additionalFeatures'])
                 
-            if 'maxCharLen' in f.attrs:
+            if 'maxCharLen' in f.attrs and f.attrs['maxCharLen'] != 'None':
                 self.maxCharLen = int(f.attrs['maxCharLen'])
             
         self.model = model        

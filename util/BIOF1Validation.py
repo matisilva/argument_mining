@@ -45,7 +45,7 @@ def compute_precision_token_basis(guessed_sentences, correct_sentences, O_Label)
 
 
 def compute_f1(predictions, correct, idx2Label, correctBIOErrors='No', encodingScheme='BIO'): 
-    label_pred = []    
+    label_pred = []
     for sentence in predictions:
         label_pred.append([idx2Label[element] for element in sentence])
         
@@ -62,10 +62,7 @@ def compute_f1(predictions, correct, idx2Label, correctBIOErrors='No', encodingS
     elif encodingScheme == 'IOB':
         convertIOBtoBIO(label_pred)
         convertIOBtoBIO(label_correct)
-            
-                    
-    
-          
+   
     checkBIOEncoding(label_pred, correctBIOErrors)
 
     prec = compute_precision(label_pred, label_correct)

@@ -283,7 +283,6 @@ def createMatrices(sentences, mappings, padOneTokenSentence=True):
                     row['characters'].append([0])
                 else:
                     row[mapping].append(0)
-            
         data.append(row)
     
     if numTokens > 0:           
