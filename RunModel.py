@@ -21,9 +21,9 @@ with open(inputPath, 'r') as f:
 lstmModel = BiLSTM()
 lstmModel.loadModel(modelPath)
 
-
+paragraphs = filter(lambda x: x != '', text.splitlines())
 # :: Prepare the input ::
-sentences = [{'tokens': nltk.word_tokenize(sent)} for sent in nltk.sent_tokenize(text)]
+sentences = [{'tokens': nltk.word_tokenize(par)} for par in paragraphs]
 addCharInformation(sentences)
 addCasingInformation(sentences)
 
@@ -40,3 +40,4 @@ for sentenceIdx in range(len(sentences)):
     for tokenIdx in range(len(tokens)):
         print("{}\t{}".format(tokens[tokenIdx], tokenTags[tokenIdx]))
     print("")
+
