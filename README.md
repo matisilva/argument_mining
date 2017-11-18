@@ -18,6 +18,8 @@ Adaptar el código para..
 $ virtualenv .env
 $ source .env/bin/activate
 $ pip install -r requirements.txt
+$ mkdir pkl
+$ mkdir tmp
 ```
 
 ### Archivos de entrenamiento

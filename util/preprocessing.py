@@ -317,19 +317,17 @@ def createPklFiles(datasetFiles, word2Idx, casing2Idx, cols, commentSymbol=None,
     addCharInformation(testSentences)   
     addCasingInformation(testSentences)   
     
-  
+    print(devSentences[:3])
     trainMatrix = createMatrices(trainSentences, mappings)
     devMatrix = createMatrices(devSentences, mappings)
     testMatrix = createMatrices(testSentences, mappings)       
 
     
-    data = { 'mappings': mappings,
-                'trainMatrix': trainMatrix,
-                'devMatrix': devMatrix,
-                'testMatrix': testMatrix
-            }        
-       
-    
+    data = {'mappings': mappings,
+            'trainMatrix': trainMatrix,
+            'devMatrix': devMatrix,
+            'testMatrix': testMatrix
+            }
     return data
 
 def createMappings(sentences):
@@ -341,11 +339,9 @@ def createMappings(sentences):
     #vocabs = {name:{} for name in sentenceKeys}
     for sentence in sentences:
         for name in sentenceKeys:
-            for item in sentence[name]:              
+            for item in sentence[name]:
                 if item not in vocabs[name]:
-                    vocabs[name][item] = len(vocabs[name]) 
-                    
-   
+                    vocabs[name][item] = len(vocabs[name])
     return vocabs  
 
 
@@ -355,12 +351,7 @@ def loadDatasetPickle(embeddingsPickle):
     f = open(embeddingsPickle, 'rb')
     pklObjects = pkl.load(f)
     f.close()
-    
-
-        
-        
     return pklObjects['embeddings'], pklObjects['word2Idx'], pklObjects['datasets']
-
 
 
 def getLevyDependencyEmbeddings():

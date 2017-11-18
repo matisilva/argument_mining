@@ -21,8 +21,7 @@ import numpy as np
 import logging
 
 from .keraslayers.ChainCRF import ChainCRF
-import util.BIOF1Validation as BIOF1Validation
-from util.BIOF1Validation import compute_f1_token_basis
+from util.F1Validation import compute_f1_token_basis
 
 
 import sys
@@ -39,19 +38,18 @@ class BiLSTM:
     model = None 
     epoch = 0 
     skipOneTokenSentences=True
-    
     dataset = None
     embeddings = None
     labelKey = None
-    writeOutput = True    
-    devAndTestEqual = False
+    writeOutput = True
     resultsOut = None
     modelSavePath = None
     maxCharLen = None
+    devEqualTest = True
     
     params = {'miniBatchSize': 32, 'dropout': [0.25, 0.25], 'classifier': 'Softmax', 'LSTM-Size': [100], 'optimizer': 'nadam', 'earlyStopping': -1, 'addFeatureDimensions': 10,
                 'charEmbeddings': None, 'charEmbeddingsSize':30, 'charFilterSize': 30, 'charFilterLength':3, 'charLSTMSize': 25, 'clipvalue': 0, 'clipnorm': 1 } #Default params
-   
+
 
     def __init__(self,   params=None):
         if params != None:
@@ -63,14 +61,19 @@ class BiLSTM:
         self.mappings = mappings
         self.embeddings = embeddings
         self.idx2Word = {v: k for k, v in self.mappings['tokens'].items()}
-        
+
     def setTrainDataset(self, dataset, labelKey):
         self.dataset = dataset
         self.labelKey = labelKey
         self.label2Idx = self.mappings[labelKey]  
         self.idx2Label = {v: k for k, v in self.label2Idx.items()}
         self.mappings['label'] = self.mappings[labelKey]
-                        
+        self.max_test_score = 0
+        self.max_dev_score = 0
+        self.max_scores = {'test': self.max_test_score,
+                           'dev': self.max_dev_score}
+
+
     def padCharacters(self):
         """ Pads the character representations of the words to the longest word in the dataset """
         #Find the longest word in the dataset
@@ -79,7 +82,7 @@ class BiLSTM:
             for sentence in data:
                 for token in sentence['characters']:
                     maxCharLen = max(maxCharLen, len(token))
-             
+
         for data in [self.dataset['trainMatrix'], self.dataset['devMatrix'], self.dataset['testMatrix']]:       
             #Pad each other word with zeros
             for sentenceIdx in range(len(data)):
@@ -88,7 +91,7 @@ class BiLSTM:
                     data[sentenceIdx]['characters'][tokenIdx] = np.pad(token, (0,maxCharLen-len(token)), 'constant')
     
         self.maxCharLen = maxCharLen
-        
+
     def trainModel(self):
         if self.model == None:
             self.buildModel()        
@@ -97,7 +100,7 @@ class BiLSTM:
         self.epoch += 1
         
         if self.params['optimizer'] in self.learning_rate_updates and self.epoch in self.learning_rate_updates[self.params['optimizer']]:
-            K.set_value(self.model.optimizer.lr, self.learning_rate_updates[self.params['optimizer']][self.epoch])          
+            K.set_value(self.model.optimizer.lr, self.learning_rate_updates[self.params['optimizer']][self.epoch])
             logging.info("Update Learning Rate to %f" % (K.get_value(self.model.optimizer.lr)))
         
         iterator = self.online_iterate_dataset(trainMatrix, self.labelKey) if self.params['miniBatchSize'] == 1 else self.batch_iterate_dataset(trainMatrix, self.labelKey)
@@ -106,17 +109,16 @@ class BiLSTM:
             labels = batch[0]
             nnInput = batch[1:]                
             self.model.train_on_batch(nnInput, labels)   
-            
+
     def predictLabels(self, sentences):
         if self.model == None:
             self.buildModel()
             
         predLabels = [None]*len(sentences)
-        
+
         sentenceLengths = self.getSentenceLengths(sentences)
-        
-        for senLength, indices in sentenceLengths.items():        
-            
+
+        for senLength, indices in sentenceLengths.items():
             if self.skipOneTokenSentences and senLength == 1:
                 if 'O' in self.label2Idx:
                     dummyLabel = self.label2Idx['O']
@@ -134,15 +136,14 @@ class BiLSTM:
                                                     
                 for name in features:
                     inputData[name] = np.asarray(inputData[name])
-                    
-                    
+
                 predictions = self.model.predict([inputData[name] for name in features], verbose=False)
                 predictions = predictions.argmax(axis=-1) #Predict classes      
-                
-            
+
             predIdx = 0
             for idx in indices:
                 predLabels[idx] = predictions[predIdx]
+                sentences[idx]['label'] = predictions[predIdx]
                 predIdx += 1   
         
         return predLabels
@@ -229,9 +230,7 @@ class BiLSTM:
                 
             assert(numTrainExamples == sentenceCount) #Check that no sentence was missed 
             
-          
-        
-    
+
     def buildModel(self):        
         params = self.params  
         
@@ -351,7 +350,6 @@ class BiLSTM:
         elif params['optimizer'].lower() == 'sgd':
             opt = SGD(lr=0.1, **optimizerParams)
         
-        
         model.compile(loss=lossFct, optimizer=opt)
         
         self.model = model
@@ -359,18 +357,7 @@ class BiLSTM:
             model.summary()
             logging.debug(model.get_config())            
             logging.debug("Optimizer: %s, %s" % (str(type(opt)), str(opt.get_config())))
-            
-    def storeResults(self, resultsFilepath):
-        if resultsFilepath != None:
-            directory = os.path.dirname(resultsFilepath)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-                
-            self.resultsOut = open(resultsFilepath, 'w')
-        else:
-            self.resultsOut = None 
 
-    
     def evaluate(self, epochs):  
         logging.info("%d train sentences" % len(self.dataset['trainMatrix']))     
         logging.info("%d dev sentences" % len(self.dataset['devMatrix']))   
@@ -380,8 +367,6 @@ class BiLSTM:
         testMatrix = self.dataset['testMatrix']
    
         total_train_time = 0
-        max_dev_score = 0
-        max_test_score = 0
         no_improvement_since = 0
         
         for epoch in range(epochs):      
@@ -398,24 +383,19 @@ class BiLSTM:
             start_time = time.time()
             dev_score, test_score = self.computeScores(devMatrix, testMatrix)
             
-            if dev_score > max_dev_score:
+            if dev_score > self.max_dev_score:
                 no_improvement_since = 0
-                max_dev_score = dev_score 
-                max_test_score = test_score
+                self.max_dev_score = dev_score 
+                self.max_test_score = test_score
                 
                 if self.modelSavePath != None:                    
                     savePath = self.modelSavePath.replace("[DevScore]", "%.4f" % dev_score).replace("[TestScore]", "%.4f" % test_score).replace("[Epoch]", str(epoch))
-                    
                     directory = os.path.dirname(savePath)
                     if not os.path.exists(directory):
                         os.makedirs(directory)
                         
                     if not os.path.isfile(savePath):
                         self.model.save(savePath, False)
-                        
-                        
-                        #self.save_dict_to_hdf5(self.mappings, savePath, 'mappings')
-                        
                         import json
                         import h5py
                         mappingsJson = json.dumps(self.mappings)
@@ -434,11 +414,11 @@ class BiLSTM:
                 
                 
             if self.resultsOut != None:
-                self.resultsOut.write("\t".join(map(str, [epoch+1, dev_score, test_score, max_dev_score, max_test_score])))
+                self.resultsOut.write("\t".join(map(str, [epoch+1, dev_score, test_score, self.max_dev_score, self.max_test_score])))
                 self.resultsOut.write("\n")
                 self.resultsOut.flush()
                 
-            logging.info("Max: %.4f on dev; %.4f on test" % (max_dev_score, max_test_score))
+            logging.info("Max: %.4f on dev; %.4f on test" % (self.max_dev_score, self.max_test_score))
             logging.info("%.2f sec for evaluation" % (time.time() - start_time))
             
             if self.params['earlyStopping'] > 0 and no_improvement_since >= self.params['earlyStopping']:
@@ -448,34 +428,28 @@ class BiLSTM:
             
     def computeScores(self, devMatrix, testMatrix):
         return self.computeF1Scores(devMatrix, testMatrix)
-        #if self.labelKey.endswith('_BIO') or self.labelKey.endswith('_IOB') or self.labelKey.endswith('_IOBES'):
-        #    return self.computeF1Scores(devMatrix, testMatrix)
-        #else:
-        #    return self.computeAccScores(devMatrix, testMatrix)
             
     def computeF1Scores(self, devMatrix, testMatrix):
         logging.info("Dev-Data metrics:")
+        dev_f1s = 0
         for tag in self.label2Idx.keys():
             dev_pre, dev_rec, dev_f1 = self.computeF1(devMatrix, 'dev', self.label2Idx[tag])
             logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, dev_pre, dev_rec, dev_f1))
-        
-        logging.info("")
-        logging.info("Test-Data metrics:")
-        for tag in self.label2Idx.keys():
-            test_pre, test_rec, test_f1 = self.computeF1(testMatrix, 'test', self.label2Idx[tag])
-            logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, test_pre, test_rec, test_f1))
-        
+            dev_f1s += dev_f1
+
+        test_f1 = dev_f1
+        if not devEqualTest:
+            logging.info("")
+            logging.info("Test-Data metrics:")
+            test_f1s = 0
+            for tag in self.label2Idx.keys():
+                test_pre, test_rec, test_f1 = self.computeF1(testMatrix, 'test', self.label2Idx[tag])
+                logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, test_pre, test_rec, test_f1))
+                test_f1s += dev_f1
+            dev_f1 = dev_f1s / float(len(self.label2Idx))
+            test_f1 = test_f1s / float(len(self.label2Idx))
         return dev_f1, test_f1
-        
-    def computeAccScores(self, devMatrix, testMatrix):
-        dev_acc = self.computeAcc(devMatrix)
-        test_acc = self.computeAcc(testMatrix)
-        
-        logging.info("Dev-Data: Accuracy: %.4f" % (dev_acc))
-        logging.info("Test-Data: Accuracy: %.4f" % (test_acc))
-        
-        return dev_acc, test_acc
-          
+
 
     def tagSentences(self, sentences):
         
@@ -497,12 +471,13 @@ class BiLSTM:
                     unpaddedPredLabels.append(paddedPredLabels[idx][tokenIdx])
 
             predLabels.append(unpaddedPredLabels)
+
         idx2Label = {v: k for k, v in self.mappings['label'].items()}
         labels = [[idx2Label[tag] for tag in tagSentence] for tagSentence in predLabels]
         
         return labels
     
-    def computeF1(self, sentences, name='', tag_id="1"):
+    def computeF1(self, sentences, name, tag_id):
         correctLabels = []
         predLabels = []
         paddedPredLabels = self.predictLabels(sentences)        
@@ -514,26 +489,16 @@ class BiLSTM:
                 if sentences[idx]['tokens'][tokenIdx] != 0: #Skip padding tokens 
                     unpaddedCorrectLabels.append(sentences[idx][self.labelKey][tokenIdx])
                     unpaddedPredLabels.append(paddedPredLabels[idx][tokenIdx])
-                    
             correctLabels.append(unpaddedCorrectLabels)
             predLabels.append(unpaddedPredLabels)
-            
-        '''
-        encodingScheme = self.labelKey[self.labelKey.index('_')+1:]
-               
-        pre, rec, f1 = BIOF1Validation.compute_f1(predLabels, correctLabels, self.idx2Label, 'O', encodingScheme)  
-        pre_b, rec_b, f1_b = BIOF1Validation.compute_f1(predLabels, correctLabels, self.idx2Label, 'B', encodingScheme)
-        if f1_b > f1:
-            logging.debug("Setting incorrect tags to B yields improvement from %.4f to %.4f" % (f1, f1_b))
-            pre, rec, f1 = pre_b, rec_b, f1_b 
-        
-    
-        '''
 
         pre, rec, f1  =  compute_f1_token_basis(predLabels, correctLabels, tag_id)
 
-        if self.writeOutput:
+        max_score = self.max_scores[name]
+        
+        if self.writeOutput and max_score < f1:
             self.writeOutputToFile(sentences, predLabels, '%.4f_%s' % (f1, name))
+            self.needNewWriting = False
         return pre, rec, f1
     
     def writeOutputToFile(self, sentences, predLabels, name):
@@ -544,25 +509,10 @@ class BiLSTM:
                     token = self.idx2Word[sentences[sentenceIdx]['tokens'][tokenIdx]]
                     label = self.idx2Label[sentences[sentenceIdx][self.labelKey][tokenIdx]]
                     predLabel = self.idx2Label[predLabels[sentenceIdx][tokenIdx]]
-                    
                     fOut.write("\t".join([token, label, predLabel]))
                     fOut.write("\n")
-                
                 fOut.write("\n")
-            
             fOut.close()
-
-    def computeAcc(self, sentences):
-        correctLabels = [sentences[idx][self.labelKey] for idx in range(len(sentences))]
-        predLabels = self.predictLabels(sentences)
-        numLabels = 0
-        numCorrLabels = 0
-        for sentenceId in range(len(correctLabels)):
-            for tokenId in range(len(correctLabels[sentenceId])):
-                numLabels += 1
-                if correctLabels[sentenceId][tokenId] == predLabels[sentenceId][tokenId]:
-                    numCorrLabels += 1
-        return numCorrLabels/float(numLabels)
     
     def loadModel(self, modelPath):
         import h5py

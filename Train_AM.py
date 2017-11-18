@@ -35,10 +35,11 @@ dataColumns = {1:'tokens', 2:'AM_TAG'} #Tab separated columns, column 1 contains
 labelKey = 'AM_TAG'
 
 #embeddingsPath = 'levy_deps.words' #Word embeddings by Levy et al: https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/
-embeddingsPath = 'glove.6B.100d.txt'
+#embeddingsPath = 'glove.6B.100d.txt'
+embeddingsPath = 'glove.6B.300d.txt'
 
 #Parameters of the network
-params = {'dropout': [0.25, 0.25], 'classifier': 'softmax', 'LSTM-Size': [100], 'optimizer': 'sgd', 'charEmbeddings': None, 'miniBatchSize': 32}
+params = {'dropout': [0.05, 0.05], 'classifier': 'softmax', 'LSTM-Size': [125], 'optimizer': 'rmsprop', 'charEmbeddings': None, 'miniBatchSize': 80}
 
 
 frequencyThresholdUnknownTokens = 50 #If a token that is not in the pre-trained embeddings file appears at least 50 times in the train.txt, then a new embedding is generated for this word
