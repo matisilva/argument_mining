@@ -394,7 +394,9 @@ class BiLSTM:
                 self.max_dev_score = dev_score 
                 self.max_test_score = test_score
                 
-                if self.modelSavePath != None:                    
+                if self.modelSavePath != None:
+                    if self.devEqualTest:
+                        savePath = self.modelSavePath.replace("[TestScore]_", "")
                     savePath = self.modelSavePath.replace("[DevScore]", "%.4f" % dev_score).replace("[TestScore]", "%.4f" % test_score).replace("[Epoch]", str(epoch))
                     directory = os.path.dirname(savePath)
                     if not os.path.exists(directory):

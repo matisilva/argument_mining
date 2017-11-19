@@ -33,3 +33,4 @@ data/removeComments.py
 essay*.txt
 essay*.ann
 .env
+glove*

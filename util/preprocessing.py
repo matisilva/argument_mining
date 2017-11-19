@@ -379,9 +379,11 @@ def getReimersEmbeddings():
 def getGloveEmbeddings():
     if not os.path.isfile("glove.6B.zip"):
         print("Start downloading word embeddings from Glove et al. ...")
-        os.system("wget -O globe.6B.zip http://nlp.stanford.edu/data/glove.6B.zip")
+        os.system("wget -O glove.6B.zip http://nlp.stanford.edu/data/glove.6B.zip")
     print("Start unzip word embeddings ...")
-    os.system("unzip globe.6B.bz2")
+    os.system("unzip glove.6B.bz2")
+    os.system("mv glove.6B/* .")
+    os.system("rm -rf glove.6B")
 
 def getWord2VecEmbeddings():
     pass
