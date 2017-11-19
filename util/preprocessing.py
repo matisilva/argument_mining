@@ -44,6 +44,8 @@ def perpareDataset(embeddingsPath, datasetFiles, frequencyThresholdUnknownTokens
             getLevyDependencyEmbeddings()
         elif embeddingsPath == '2014_tudarmstadt_german_50mincount.vocab.gz':
             getReimersEmbeddings()
+        elif embeddingsPath.startswith('glove'):
+            getGloveEmbeddings()
         else:
             print("The embeddings file %s was not found" % embeddingsPath)
             exit()
@@ -316,8 +318,7 @@ def createPklFiles(datasetFiles, word2Idx, casing2Idx, cols, commentSymbol=None,
     
     addCharInformation(testSentences)   
     addCasingInformation(testSentences)   
-    
-    print(devSentences[:3])
+
     trainMatrix = createMatrices(trainSentences, mappings)
     devMatrix = createMatrices(devSentences, mappings)
     testMatrix = createMatrices(testSentences, mappings)       
@@ -375,4 +376,12 @@ def getReimersEmbeddings():
         print("Start downloading word embeddings from Reimers et al. ...")
         os.system("wget https://public.ukp.informatik.tu-darmstadt.de/reimers/2014_german_embeddings/2014_tudarmstadt_german_50mincount.vocab.gz")
     
-   
+def getGloveEmbeddings():
+    if not os.path.isfile("glove.6B.zip"):
+        print("Start downloading word embeddings from Glove et al. ...")
+        os.system("wget -O globe.6B.zip http://nlp.stanford.edu/data/glove.6B.zip")
+    print("Start unzip word embeddings ...")
+    os.system("unzip globe.6B.bz2")
+
+def getWord2VecEmbeddings():
+    pass

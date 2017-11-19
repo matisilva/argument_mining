@@ -4,6 +4,7 @@ import logging
 import sys
 from neuralnets.BiLSTM import BiLSTM
 from util.preprocessing import perpareDataset, loadDatasetPickle
+from optparse import OptionParser
 
 # :: Change into the working dir of the script ::
 abspath = os.path.abspath(__file__)
@@ -20,8 +21,33 @@ ch.setLevel(loggingLevel)
 formatter = logging.Formatter('%(message)s')
 ch.setFormatter(formatter)
 logger.addHandler(ch)
-
-
+embeddingsPathOpt = {'levy':'levy_deps.words',
+                     'glove':'glove.6B.300d.txt',
+                     'glove100':'glove.6B.100d.txt',
+                     'word2vec':'',
+                    }
+op = OptionParser(usage='Usage: python Train_AM [dataset] [embedding] [opts]')
+op.add_option("--classifier",
+              dest="classifier",
+              default="softmax",
+              help="softmax / crf")
+op.add_option("--optimizer",
+              dest="optimizer",
+              default="nadam",
+              help="nadam / adam / rmsprop / adadelta / adagrad / sgd")
+op.add_option("--cnn",
+              dest="cnn",
+              default="lstm",
+              help="None / cnn / lstm")
+op.add_option("--eval",
+              dest="evalTest",
+              default=False,
+              help="If test.txt is evaluated in each epoch")
+(opts, args) = op.parse_args()
+if len(sys.argv) < 3:
+    print(args)
+    print("Usage: python Train_AM [dataset] [embedding] [opts]")
+    exit()
 ######################################################
 #
 # Data preprocessing
@@ -30,16 +56,19 @@ logger.addHandler(ch)
 
 
 # :: Train / Dev / Test-Files ::
-datasetName = 'am_simplest'
-dataColumns = {1:'tokens', 2:'AM_TAG'} #Tab separated columns, column 1 contains the token, 3 the universal POS tag
-labelKey = 'AM_TAG'
 
-#embeddingsPath = 'levy_deps.words' #Word embeddings by Levy et al: https://levyomer.wordpress.com/2014/04/25/dependency-based-word-embeddings/
-#embeddingsPath = 'glove.6B.100d.txt'
-embeddingsPath = 'glove.6B.300d.txt'
+datasetName = sys.argv[1]
+dataColumns = {1:'tokens', 2:'AM_TAG'}
+labelKey = 'AM_TAG'
+embeddingsPath = embeddingsPathOpt[sys.argv[2]]
 
 #Parameters of the network
-params = {'dropout': [0.05, 0.05], 'classifier': 'softmax', 'LSTM-Size': [125], 'optimizer': 'rmsprop', 'charEmbeddings': None, 'miniBatchSize': 80}
+params = {'dropout': [0.25, 0.25],
+          'classifier': opts.classifier,
+          'LSTM-Size': [125],
+          'optimizer': opts.optimizer,
+          'charEmbeddings': opts.cnn,
+          'miniBatchSize': 32}
 
 
 frequencyThresholdUnknownTokens = 50 #If a token that is not in the pre-trained embeddings file appears at least 50 times in the train.txt, then a new embedding is generated for this word
@@ -67,14 +96,13 @@ data = datasets[datasetName]
 
 
 print("Dataset:", datasetName)
-print(data['mappings'].keys())
 print("Label key: ", labelKey)
 print("Train Sentences:", len(data['trainMatrix']))
 print("Dev Sentences:", len(data['devMatrix']))
 print("Test Sentences:", len(data['testMatrix']))
 
 
-model = BiLSTM(params)
+model = BiLSTM(devEqualTest=opts.evalTest,params=params)
 model.setMappings(embeddings, data['mappings'])
 model.setTrainDataset(data, labelKey)
 model.verboseBuild = True

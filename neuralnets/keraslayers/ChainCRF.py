@@ -429,10 +429,6 @@ if __name__ == '__main__':
     x = np.random.randint(1, vocab_size, size=(batch_size, maxlen))
     y = np.random.randint(n_classes, size=(batch_size, maxlen))
     y = np.eye(n_classes)[y]
-    model.train_on_batch(x, y)
-    
-    
-    
+    model.train_on_batch(x, y)    
     print(x)
     print(y)
-    

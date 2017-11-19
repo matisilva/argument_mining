@@ -66,4 +66,16 @@ El etiquetado se imprimirá por stdout, aunque si un archivo de salida fuera nec
 ### Evaluar eficiencia
 TODO: generar eval.py que evalue los output etiquetados comparandolos con los reales. True vs predicted y reporte los errores
 
+## Adaptacion de input:
+TODO: Generar en RunModel si pasan un texto en connl el raw para ingresarlo a la red
+
 ## Análisis de resultados
+TODO
+- Con simple tagging
+	2 embeddings
+	3 optimizers
+- full taggin
+    same 2 embeddings 3 optimizers
+    con cnn
+    con cnn y crf
+

@@ -45,16 +45,27 @@ class BiLSTM:
     resultsOut = None
     modelSavePath = None
     maxCharLen = None
-    devEqualTest = True
     
-    params = {'miniBatchSize': 32, 'dropout': [0.25, 0.25], 'classifier': 'Softmax', 'LSTM-Size': [100], 'optimizer': 'nadam', 'earlyStopping': -1, 'addFeatureDimensions': 10,
-                'charEmbeddings': None, 'charEmbeddingsSize':30, 'charFilterSize': 30, 'charFilterLength':3, 'charLSTMSize': 25, 'clipvalue': 0, 'clipnorm': 1 } #Default params
+    params = {'miniBatchSize': 32,
+              'dropout': [0.25, 0.25],
+              'classifier': 'Softmax',
+              'LSTM-Size': [100],
+              'optimizer': 'nadam',
+              'earlyStopping': -1,
+              'addFeatureDimensions': 10,
+              'charEmbeddings': None,
+              'charEmbeddingsSize':30,
+              'charFilterSize': 30,
+              'charFilterLength':3,
+              'charLSTMSize': 25,
+              'clipvalue': 0,
+              'clipnorm': 1 } #Default params
 
 
-    def __init__(self,   params=None):
+    def __init__(self, devEqualTest=True, params=None):
         if params != None:
             self.params.update(params)
-        
+        self.devEqualTest = devEqualTest
         logging.info("BiLSTM model initialized with parameters: %s" % str(self.params))
         
     def setMappings(self, embeddings, mappings):
@@ -249,7 +260,6 @@ class BiLSTM:
         #casing.add(Embedding(input_dim=len(casing2Idx), output_dim=self.addFeatureDimensions, trainable=True)) 
         casing.add(Embedding(input_dim=caseMatrix.shape[0], output_dim=caseMatrix.shape[1], weights=[caseMatrix], trainable=False, name='casing_emd')) 
     
-        
         mergeLayers = [tokens, casing]
         
         if self.additionalFeatures != None:
@@ -273,10 +283,8 @@ class BiLSTM:
                 
             charEmbeddings[0] = np.zeros(charEmbeddingsSize) #Zero padding
             charEmbeddings = np.asarray(charEmbeddings)
-            
             chars = Sequential()
-            chars.add(TimeDistributed(Embedding(input_dim=charEmbeddings.shape[0], output_dim=charEmbeddings.shape[1],  weights=[charEmbeddings], trainable=True, mask_zero=True), input_shape=(None,maxCharLen), name='char_emd'))
-            
+            chars.add(TimeDistributed(Embedding(input_dim=charEmbeddings.shape[0], output_dim=charEmbeddings.shape[1],  weights=[charEmbeddings], trainable=False, mask_zero=True), input_shape=(None, maxCharLen), name='char_emd'))
             if params['charEmbeddings'].lower() == 'lstm': #Use LSTM for char embeddings from Lample et al., 2016
                 charLSTMSize = params['charLSTMSize']
                 chars.add(TimeDistributed(Bidirectional(LSTM(charLSTMSize, return_sequences=False)), name="char_lstm"))
@@ -289,13 +297,11 @@ class BiLSTM:
             mergeLayers.append(chars)
             if self.additionalFeatures == None:
                 self.additionalFeatures = []
-                
             self.additionalFeatures.append('characters')
-        
-        model = Sequential();
-        model.add(Merge(mergeLayers, mode='concat')) 
-        
-         
+
+        model = Sequential()
+        model.add(Merge(mergeLayers, mode='concat'))
+
         # Add LSTMs
         cnt = 1
         for size in params['LSTM-Size']:
@@ -438,7 +444,7 @@ class BiLSTM:
             dev_f1s += dev_f1
 
         test_f1 = dev_f1
-        if not devEqualTest:
+        if not self.devEqualTest:
             logging.info("")
             logging.info("Test-Data metrics:")
             test_f1s = 0
