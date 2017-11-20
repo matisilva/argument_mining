@@ -441,21 +441,30 @@ class BiLSTM:
         logging.info("Dev-Data metrics:")
         dev_f1s = 0
         for tag in self.label2Idx.keys():
-            dev_pre, dev_rec, dev_f1 = self.computeF1(devMatrix, 'dev', self.label2Idx[tag])
+            dev_pre, dev_rec, dev_f1, dev_tags = self.computeF1(devMatrix, 'dev', self.label2Idx[tag])
             logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, dev_pre, dev_rec, dev_f1))
             dev_f1s += dev_f1
 
+        dev_f1 = dev_f1s / float(len(self.label2Idx))
         test_f1 = dev_f1
         if not self.devEqualTest:
             logging.info("")
             logging.info("Test-Data metrics:")
             test_f1s = 0
             for tag in self.label2Idx.keys():
-                test_pre, test_rec, test_f1 = self.computeF1(testMatrix, 'test', self.label2Idx[tag])
+                test_pre, test_rec, test_f1 , test_tags = self.computeF1(testMatrix, 'test', self.label2Idx[tag])
                 logging.info("[%s]: Prec: %.3f, Rec: %.3f, F1: %.4f" % (tag, test_pre, test_rec, test_f1))
-                test_f1s += dev_f1
-            dev_f1 = dev_f1s / float(len(self.label2Idx))
+                test_f1s += test_f1
             test_f1 = test_f1s / float(len(self.label2Idx))
+
+        max_score = self.max_scores['dev']
+        if self.writeOutput and max_score < dev_f1:
+            self.writeOutputToFile(devMatrix, dev_tags, '%.4f_%s' % (dev_f1, 'dev'))
+            self.max_scores['dev'] = dev_f1
+        max_score = self.max_scores['test']
+        if self.writeOutput and max_score < test_f1:
+            self.writeOutputToFile(testMatrix, test_tags, '%.4f_%s' % (test_f1, 'test'))
+            self.max_scores['test'] = test_f1
         return dev_f1, test_f1
 
 
@@ -501,13 +510,8 @@ class BiLSTM:
             predLabels.append(unpaddedPredLabels)
 
         pre, rec, f1  =  compute_f1_token_basis(predLabels, correctLabels, tag_id)
-
-        max_score = self.max_scores[name]
         
-        if self.writeOutput and max_score < f1:
-            self.writeOutputToFile(sentences, predLabels, '%.4f_%s' % (f1, name))
-            self.needNewWriting = False
-        return pre, rec, f1
+        return pre, rec, f1, predLabels
     
     def writeOutputToFile(self, sentences, predLabels, name):
             outputName = 'tmp/'+name

@@ -30,18 +30,18 @@ op = OptionParser(usage='Usage: python Train_AM [dataset] [embedding] [opts]')
 op.add_option("--classifier",
               dest="classifier",
               default="softmax",
-              help="softmax / crf")
+              help="softmax / crf / tanh-crf")
 op.add_option("--optimizer",
               dest="optimizer",
               default="nadam",
               help="nadam / adam / rmsprop / adadelta / adagrad / sgd")
 op.add_option("--cnn",
               dest="cnn",
-              default="lstm",
+              default="None",
               help="None / cnn / lstm")
 op.add_option("--eval",
               dest="evalTest",
-              default=False,
+              default=True,
               help="If test.txt is evaluated in each epoch")
 (opts, args) = op.parse_args()
 if len(sys.argv) < 3:
@@ -102,7 +102,7 @@ print("Dev Sentences:", len(data['devMatrix']))
 print("Test Sentences:", len(data['testMatrix']))
 
 
-model = BiLSTM(devEqualTest=opts.evalTest,params=params)
+model = BiLSTM(devEqualTest=not opts.evalTest,params=params)
 model.setMappings(embeddings, data['mappings'])
 model.setTrainDataset(data, labelKey)
 model.verboseBuild = True
