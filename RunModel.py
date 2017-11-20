@@ -4,7 +4,7 @@ from __future__ import print_function
 import nltk
 from util.preprocessing import addCharInformation, createMatrices, addCasingInformation
 from neuralnets.BiLSTM import BiLSTM
-import sys
+import sys, os
 
 if len(sys.argv) < 3:
     print("Usage: python RunModel.py modelPath inputPath")
@@ -15,7 +15,10 @@ inputPath = sys.argv[2]
 
 with open(inputPath, 'r') as f:
     text = f.read()
-
+    if len(text.split("\t"))>1:
+        os.system('python util/conll_to_txt.py --input={} --output=txt_{} --target_column={}'.format(inputPath,inputPath,1))
+        with open(inputPath + "_txt", 'r') as newf:
+            text = newf.read() 
 
 # :: Load the model ::
 lstmModel = BiLSTM()
