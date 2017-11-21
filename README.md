@@ -74,8 +74,16 @@ TODO
 - Con simple tagging
 	2 embeddings
 	3 optimizers
-- full taggin
-    same 2 embeddings 3 optimizers
-    con cnn
-    con cnn y crf
+
+| am_simplest 	| f1 promedio(dev) 	| f1 promedio(test) 	| epochs model 	|
+|-------------	|------------------	|-------------------	|--------------	|
+|             	|                  	|                   	|              	|
+	
+
+| am_full(levy)               | f1 promedio(dev) | f1 promedio(test) | epochs model |
+|-----------------------------|------------------|-------------------|--------------|
+| charEmbedding(lstm)-crf     | 0.46             | 0.68              | 20 epochs    |
+| charEmbedding(cnn)-crf      | 0.48             | 0.46              | 39 epochs    |
+| charEmbeddings(cnn)-softmax | 0.46             | 0.71              | 23 epochs    |
+| softmax                     | 0.44             | 0.47              | 49 epochs    |
 
