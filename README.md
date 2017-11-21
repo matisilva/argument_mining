@@ -42,7 +42,7 @@ O correr el script siguiente y los tendrán disponibles en **example_essays** en
 $ download_examples
 ```
 
-### Obtener modelo entrenado.
+### Obtener modelo entrenado
 Para entrenar un modelo correr el siguiente comando
 ```
 $ python Train_AM.py [dataset] [embedding] [opts]
@@ -61,15 +61,34 @@ Si al cabo de cinco épocas (por default) no se obtienen mejoras en accuracy, en
 
 Para etiquetar texto ajeno con un modelo preentrenado ejecutar el comando RunModel de la siguiente forma.
 ```
-$ python RunModel /models/[dataset]/AM_TAG/[selectedModel].h5 [input.txt]
+$ python RunModel.py /models/[dataset]/AM_TAG/[selectedModel].h5 [input.txt]
 ```
-El etiquetado se imprimirá por stdout, aunque si un archivo de salida fuera necesario es posbile su redirección concatenando ```> [output_file]```
+El etiquetado se imprimirá por stdout, aunque si un archivo de salida fuera necesario es posible su redirección concatenando ```> [output_file]```
 
 ### Evaluar eficiencia
-TODO: generar eval.py que evalue los output etiquetados comparandolos con los reales. True vs predicted y reporte los errores
+
+Para evaluar eficiencia podemos comparar las etiquetas del output generado por RunModel y las etiquetas verdaderas del texto utilizado para correr el modelo.
+Para ello ejecutamos:
+```
+$ python Eval.py [tagged_text] [model_output] [results.txt]
+```
+Se guardarán los resultados en results.txt y serán de la forma: 
+```
+Tag errors found: 112 (0.73% acc)
+
+Errors:
+Line: 111,	 Word: through, Tag: Claim, Pred: O
+Line: 112,	 Word: cooperation, Tag: Claim, Pred: O
+Line: 113,	 Word: ,, Tag: Claim, Pred: O
+Line: 118,	 Word: interpersonal, Tag: Claim, Pred: Premise
+.
+.
+.
+```
 
 ## Adaptacion de input:
-TODO: Generar en RunModel si pasan un texto en connl el raw para ingresarlo a la red
+
+En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará automáticamente un nuevo archivo con el texto crudo con el cual se correrá el modelo.
 
 ## Análisis de resultados
 
