@@ -74,6 +74,10 @@ TODO
 - Con simple tagging
 	2 embeddings
 	3 optimizers
+
+| am_simplest 	| f1 promedio(dev) 	| f1 promedio(test) 	| epochs model 	|
+|-------------	|------------------	|-------------------	|--------------	|
+|             	|                  	|                   	|              	|
 	
 
 | am_full(levy)               | f1 promedio(dev) | f1 promedio(test) | epochs model |
