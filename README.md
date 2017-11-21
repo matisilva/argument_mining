@@ -14,7 +14,7 @@ Adaptar el código para..
 - Reportar resultados con diversos parámetros.
 
 ## Arquitectura
-TODO
+![Arquitectura de la red](arch.jpeg)
 
 
 ## Instrucciones para su uso
