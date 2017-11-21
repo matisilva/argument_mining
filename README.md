@@ -53,7 +53,9 @@ donde las opciones para cada parametro se detallan debajo.
 - **embedding**: levy, word2vec, glove
 - **[opts]**: --optimizer, --classifier, --cnn , --help
 
-TODO: marcar como se guardan los modelos entrenados y cuando corta el entrenamiento(>5 epochs without changes).
+Durante el entrenamiento, al final de cada época, se evalúa accuracy. Si ésta es mayor que la máxima accuracy que se venía registrando anteriormente, se guarda el nuevo modelo en el directorio models.
+
+Si al cabo de cinco épocas (por default) no se obtienen mejoras en accuracy, entonces se termina el entrenamiento.
 
 ### Etiquetar texto con modelo entrenado
 
@@ -70,14 +72,15 @@ TODO: generar eval.py que evalue los output etiquetados comparandolos con los re
 TODO: Generar en RunModel si pasan un texto en connl el raw para ingresarlo a la red
 
 ## Análisis de resultados
-TODO
-- Con simple tagging
-	2 embeddings
-	3 optimizers
 
-| am_simplest 	| f1 promedio(dev) 	| f1 promedio(test) 	| epochs model 	|
-|-------------	|------------------	|-------------------	|--------------	|
-|             	|                  	|                   	|              	|
+| am_simplest 	              | f1 promedio(dev) | f1 promedio(test) | epochs model |
+|-----------------------------|------------------|-------------------|--------------|
+| crf-adam             	      | 0.71             | 0.71              | 34 epochs    |
+| softmax-nadam               | 0.72             | 0.73              | 20 epochs    |
+| softmax-sgd                 | 0.48             | 0.50           	 | 44 epochs    |
+| crf-nadam (levy)            | 0.71             | 0.70        	     | 32 epochs    |
+| softmax-nadam (glove 100d)  | 0.69             | 0.70        	     | 34 epochs    |
+| softmax-nadam-paragraph     | 0.70             | 0.72        	     | 16 epochs    |
 	
 
 | am_full(levy)               | f1 promedio(dev) | f1 promedio(test) | epochs model |
