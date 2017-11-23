@@ -7,7 +7,12 @@ Basandonos en los repositorios de [UKPLab](https://github.com/UKPLab):
 - https://github.com/UKPLab/acl2017-neural_end2end_am
 - https://github.com/UKPLab/emnlp2017-bilstm-cnn-crf
 
+
+- Introducirnos en las redes neuronales usando el framework *Keras* conociendo sus distintos backends.
+- Conocer las diversas capas y sus utilidades.
+
 Adaptar el código para..
+- Utilizar la ultima version de Keras y TF para poder utilizar CNNs sin necesidad de usar otro backend.
 - Desarrollar un entorno para la identificación y etiquetado de argumentos en textos del idioma inglés.
 - Proponer alternativas de embeddings distintos para entrenamiento/evaluación.
 - Flexibilizar input para formato texto o formato CoNLL.
@@ -35,7 +40,7 @@ Se proponen 2 tipos de datasets.
 Ambos dataset estas listos y dispuestos en formato CoNLL para ser entrenados. **dev.txt, train.txt** para entrenar la red y **test.txt** para probar los resultados.
 
 ### Mas archivos de evaluación
-Si se necesitaran mas ejemplos de archivos pueden obtenerse [aqui](https://www.ukp.tudarmstadt.de/fileadmin/user_upload/Group_UKP/data/argument-recognition/ArgumentAnnotatedEssays-1.0.zip)
+Si se necesitaran mas ejemplos de archivos pueden obtenerse [https://www.ukp.tudarmstadt.de/fileadmin/user_upload/Group_UKP/data/argument-recognition/ArgumentAnnotatedEssays-1.0.zip](https://www.ukp.tudarmstadt.de/fileadmin/user_upload/Group_UKP/data/argument-recognition/ArgumentAnnotatedEssays-1.0.zip)
 
 O correr el script siguiente y los tendrán disponibles en **example_essays** en su formato *.txt* para ser evaluados y comparados con su archivo etiquetado *.ann*
 ```
