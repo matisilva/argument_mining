@@ -105,7 +105,7 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 | crf-nadam (levy)            | 0.71             | 0.70        	     | 32 epochs    |
 | softmax-nadam (glove 100d)  | 0.69             | 0.70        	     | 34 epochs    |
 | softmax-nadam-paragraph     | 0.70             | 0.72        	     | 16 epochs    |
-| softmax-nadam-paragraph(cnn)| 0.71             | 0.74        	     | 16 epochs    |
+| softmax-nadam-paragraph(cnn)| 0.71             | 0.74        	     | 27 epochs    |
 	
 
 | am_full(levy)               | f1 promedio(dev) | f1 promedio(test) | epochs model |
@@ -114,5 +114,5 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 | charEmbedding(cnn)-crf      | 0.48             | 0.46              | 39 epochs    |
 | charEmbeddings(cnn)-softmax | 0.46             | 0.71              | 23 epochs    |
 | softmax                     | 0.44             | 0.47              | 49 epochs    |
-| softmax-paragraph(cnn)      | 0.51             | 0.56              | 49 epochs    |
+| softmax-paragraph(cnn)      | 0.51             | 0.56              | 28 epochs    |
 
