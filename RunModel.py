@@ -16,8 +16,8 @@ inputPath = sys.argv[2]
 with open(inputPath, 'r') as f:
     text = f.read()
     if len(text.split("\t"))>1:
-        os.system('python util/conll_to_txt.py --input={} --output=txt_{} --target_column={}'.format(inputPath,inputPath,1))
-        with open(inputPath + "_txt", 'r') as newf:
+        os.system('python util/conll_to_txt.py --input={} --output={}_txt --target_column={}'.format(inputPath,inputPath,1))
+        with open(inputPath + "_txt", 'w') as newf:
             text = newf.read() 
 
 # :: Load the model ::
