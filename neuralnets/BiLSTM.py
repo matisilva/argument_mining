@@ -8,6 +8,7 @@ License: CC BY-SA 3.0
 from __future__ import print_function
 
 import keras
+from keras.models import Model
 from keras.models import Sequential
 from keras.layers import *
 from keras.optimizers import *
@@ -252,22 +253,22 @@ class BiLSTM:
         casing2Idx = self.dataset['mappings']['casing']
         
         caseMatrix = np.identity(len(casing2Idx), dtype='float32')
-        
         tokens = Sequential()
         tokens.add(Embedding(input_dim=embeddings.shape[0], output_dim=embeddings.shape[1],  weights=[embeddings], trainable=False, name='token_emd'))
         
         casing = Sequential()
-        #casing.add(Embedding(input_dim=len(casing2Idx), output_dim=self.addFeatureDimensions, trainable=True)) 
         casing.add(Embedding(input_dim=caseMatrix.shape[0], output_dim=caseMatrix.shape[1], weights=[caseMatrix], trainable=False, name='casing_emd')) 
     
-        mergeLayers = [tokens, casing]
+        mergeLayersIn = [tokens.input, casing.input]
+        mergeLayersOut = [tokens.output, casing.output]
         
         if self.additionalFeatures != None:
             for addFeature in self.additionalFeatures:
                 maxAddFeatureValue = max([max(sentence[addFeature]) for sentence in self.dataset['trainMatrix']+self.dataset['devMatrix']+self.dataset['testMatrix']])
                 addFeatureEmd = Sequential()
                 addFeatureEmd.add(Embedding(input_dim=maxAddFeatureValue+1, output_dim=self.params['addFeatureDimensions'], trainable=True, name=addFeature+'_emd'))  
-                mergeLayers.append(addFeatureEmd)
+                mergeLayersIn.append(addFeatureEmd.input)
+                mergeLayersOut.append(addFeatureEmd.output)
                 
                 
         # :: Character Embeddings ::
@@ -280,57 +281,56 @@ class BiLSTM:
                 limit = math.sqrt(3.0/charEmbeddingsSize)
                 vector = np.random.uniform(-limit, limit, charEmbeddingsSize) 
                 charEmbeddings.append(vector)
-                
             charEmbeddings[0] = np.zeros(charEmbeddingsSize) #Zero padding
             charEmbeddings = np.asarray(charEmbeddings)
             chars = Sequential()
-            chars.add(TimeDistributed(Embedding(input_dim=charEmbeddings.shape[0], output_dim=charEmbeddings.shape[1],  weights=[charEmbeddings], trainable=False, mask_zero=True), input_shape=(None, maxCharLen), name='char_emd'))
+            chars.add(TimeDistributed(Embedding(input_dim=charEmbeddings.shape[0], output_dim=charEmbeddings.shape[1],  weights=[charEmbeddings], trainable=True, mask_zero=True), input_shape=(None, maxCharLen), name='char_emd'))
             if params['charEmbeddings'].lower() == 'lstm': #Use LSTM for char embeddings from Lample et al., 2016
                 charLSTMSize = params['charLSTMSize']
-                chars.add(TimeDistributed(Bidirectional(LSTM(charLSTMSize, return_sequences=False)), name="char_lstm"))
+                chars.add(TimeDistributed(Bidirectional(LSTM(charLSTMSize, return_sequences=False)), name="char_LSTM"))
             else: #Use CNNs for character embeddings from Ma and Hovy, 2016
                 charFilterSize = params['charFilterSize']
                 charFilterLength = params['charFilterLength']
-                chars.add(TimeDistributed(Convolution1D(charFilterSize, charFilterLength, border_mode='same'), name="char_cnn"))
+                chars.add(TimeDistributed(Convolution1D(charFilterSize, charFilterLength, padding='same'), name="char_cnn"))
                 chars.add(TimeDistributed(GlobalMaxPooling1D(), name="char_pooling"))
             
-            mergeLayers.append(chars)
+            mergeLayersIn.append(chars.input)
+            mergeLayersOut.append(chars.output)
             if self.additionalFeatures == None:
                 self.additionalFeatures = []
             self.additionalFeatures.append('characters')
 
-        model = Sequential()
-        model.add(Merge(mergeLayers, mode='concat'))
+        mergedLayer = Concatenate()(mergeLayersOut)
 
         # Add LSTMs
         cnt = 1
         for size in params['LSTM-Size']:
             if isinstance(params['dropout'], (list, tuple)):
-                model.add(Bidirectional(LSTM(size, return_sequences=True, dropout_W=params['dropout'][0], dropout_U=params['dropout'][1]), name="varLSTM_"+str(cnt)))
+                lstmLayer = Bidirectional(LSTM(size, return_sequences=True, dropout=params['dropout'][0], recurrent_dropout=params['dropout'][1]), name="main_LSTM_"+str(cnt))(mergedLayer)
             
             else:
                 """ Naive dropout """
-                model.add(Bidirectional(LSTM(size, return_sequences=True), name="LSTM_"+str(cnt)))                          
+                lstmLayer = Bidirectional(LSTM(size, return_sequences=True), name="LSTM_"+str(cnt))(mergedLayer)
                 
                 if params['dropout'] > 0.0:
-                    model.add(TimeDistributed(Dropout(params['dropout']), name="dropout_"+str(cnt)))
+                    lstmLayer = TimeDistributed(Dropout(params['dropout']), name="dropout_"+str(cnt))(lstmLayer)
             
             cnt += 1
         
 
         # Softmax Decoder
         if params['classifier'].lower() == 'softmax':    
-            model.add(TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation='softmax'), name='softmax_output'))
+            activationLayer = TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation='softmax'), name='softmax_output')(lstmLayer)
             lossFct = 'sparse_categorical_crossentropy'
         elif params['classifier'].lower() == 'crf':
-            model.add(TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation=None), name='hidden_layer'))
+            activationLayer = TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation=None), name='hidden_layer')(lstmLayer)
             crf = ChainCRF()
-            model.add(crf)            
+            activationLayer = crf(activationLayer)            
             lossFct = crf.sparse_loss 
         elif params['classifier'].lower() == 'tanh-crf':
-            model.add(TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation='tanh'), name='hidden_layer'))
-            crf = ChainCRF()
-            model.add(crf)            
+            activationLayer = TimeDistributed(Dense(len(self.dataset['mappings'][self.labelKey]), activation='tanh'), name='hidden_layer')(lstmLayer)
+            crf = ChainCRF()          
+            activationLayer = crf(activationLayer)            
             lossFct = crf.sparse_loss 
         else:
             print("Please specify a valid classifier")
@@ -355,7 +355,7 @@ class BiLSTM:
             opt = Adagrad(**optimizerParams)
         elif params['optimizer'].lower() == 'sgd':
             opt = SGD(lr=0.1, **optimizerParams)
-        
+        model = Model(mergeLayersIn, activationLayer)
         model.compile(loss=lossFct, optimizer=opt)
         
         self.model = model
