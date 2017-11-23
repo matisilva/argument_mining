@@ -58,9 +58,9 @@ donde las opciones para cada parametro se detallan debajo.
 - **embedding**: levy, word2vec, glove
 - **[opts]**: --optimizer, --classifier, --cnn , --help
 
-Durante el entrenamiento, al final de cada época, se evalúa accuracy. Si ésta es mayor que la máxima accuracy que se venía registrando anteriormente, se guarda el nuevo modelo en el directorio models.
+Durante el entrenamiento, al final de cada época, se evalúa el F1. Si éste es mayor que el máximo F1 que se venía registrando anteriormente, se guarda el nuevo modelo en el directorio models.
 
-Si al cabo de cinco épocas (por default) no se obtienen mejoras en accuracy, entonces se termina el entrenamiento.
+Si al cabo de cinco épocas (por default) no se obtienen mejoras en F1, entonces se termina el entrenamiento.
 
 ### Etiquetar texto con modelo entrenado
 
@@ -105,6 +105,7 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 | crf-nadam (levy)            | 0.71             | 0.70        	     | 32 epochs    |
 | softmax-nadam (glove 100d)  | 0.69             | 0.70        	     | 34 epochs    |
 | softmax-nadam-paragraph     | 0.70             | 0.72        	     | 16 epochs    |
+| softmax-nadam-paragraph(cnn)| 0.71             | 0.74        	     | 16 epochs    |
 	
 
 | am_full(levy)               | f1 promedio(dev) | f1 promedio(test) | epochs model |
@@ -113,4 +114,5 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 | charEmbedding(cnn)-crf      | 0.48             | 0.46              | 39 epochs    |
 | charEmbeddings(cnn)-softmax | 0.46             | 0.71              | 23 epochs    |
 | softmax                     | 0.44             | 0.47              | 49 epochs    |
+| softmax-paragraph(cnn)      | 0.51             | 0.56              | 49 epochs    |
 
