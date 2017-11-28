@@ -1,22 +1,14 @@
 # Argument mining with BiLSTM
 Implementación de una red BiLSTM-CNN-CRF usada para Sequence Tagging. Adaptación para Argument Mining. Flexibilización de input y reporte de hiperparametros.
 
-## Objetivos
-Basandonos en los repositorios de [UKPLab](https://github.com/UKPLab):
+## Corpus
+El corpus fue tomado de los repositorios de UKPLab y puede encontrarse en ```/data```. El idioma utilizado es Inglés y estas son las dimensiones:
 
-- https://github.com/UKPLab/acl2017-neural_end2end_am
-- https://github.com/UKPLab/emnlp2017-bilstm-cnn-crf
-
-
-- Introducirnos en las redes neuronales usando el framework *Keras* conociendo sus distintos backends.
-- Conocer las diversas capas y sus utilidades.
-
-Adaptar el código para..
-- Utilizar la ultima version de Keras y TF para poder utilizar CNNs sin necesidad de usar otro backend.
-- Desarrollar un entorno para la identificación y etiquetado de argumentos en textos del idioma inglés.
-- Proponer alternativas de embeddings distintos para entrenamiento/evaluación.
-- Flexibilizar input para formato texto o formato CoNLL.
-- Reportar resultados con diversos parámetros.
+|                | train  | test  |
+|----------------|--------|-------|
+| essayLevel     | 322    | 80    |
+| paragraphLevel | 1786   | 449   |
+| Tokens         | 118648 | 29538 |
 
 ## Arquitectura
 ![Arquitectura de la red](arch.jpeg)
@@ -115,4 +107,8 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 | charEmbeddings(cnn)-softmax | 0.46             | 0.71              | 23 epochs    |
 | softmax                     | 0.44             | 0.47              | 49 epochs    |
 | softmax-paragraph(cnn)      | 0.51             | 0.56              | 28 epochs    |
+
+
+## Contexto del trabajo
+### [Presentación de materia Data Minning FaMAF 2017](AM_Project.ipynb)
 
