@@ -110,5 +110,5 @@ En caso de que se ejecute RunModel con un texto en formato CoNLL, se generará a
 
 
 ## Contexto del trabajo
-### [Presentación de materia Data Minning FaMAF 2017](AM_Project.ipynb)
+### [Presentación de materia Data Mining FaMAF 2017](AM_Project.ipynb)
 
