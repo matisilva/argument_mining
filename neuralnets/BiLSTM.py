@@ -63,7 +63,7 @@ class BiLSTM:
               'clipnorm': 1 } #Default params
 
 
-    def __init__(self, devEqualTest=True, params=None):
+    def __init__(self, devEqualTest=False, params=None):
         if params != None:
             self.params.update(params)
         self.devEqualTest = devEqualTest
